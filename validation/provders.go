@@ -3,6 +3,7 @@ package validation
 import (
 	"fmt"
 	"reflect"
+	"strings"
 )
 
 func RequiredProvider(msg ...string) VerifyProvider {
@@ -59,6 +60,20 @@ func EqualFieldProvider(field string, msg ...string) VerifyProvider {
 
 		return true, ""
 
+	}
+}
+
+func EmailProvider(field string, msg ...string) VerifyProvider {
+	return func(fieldName string, fieldValue any, accessor *ValueAccessor) (bool, string) {
+		if !strings.Contains(fieldValue.(string), "@") {
+			if len(msg) > 0 {
+				return false, msg[0]
+			}
+
+			return false, fieldName + "必须是一个有效的邮箱地址"
+		}
+
+		return true, ""
 	}
 }
 
