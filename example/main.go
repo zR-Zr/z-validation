@@ -6,12 +6,14 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/zR-Zr/z-validation/validation"
+	"github.com/zR-Zr/z-validation/zvr"
 )
 
 type User struct {
 	Name       *string `json:"name"`
 	Password   *string `json:"password"`
 	RePassword *string `json:"rePassword"`
+	Email      string  `json:"email"`
 }
 
 func main() {
@@ -69,6 +71,38 @@ func main() {
 			})
 
 		}
+	})
+
+	eng.POST("/email", func(ctx *gin.Context) {
+		var req struct {
+			Email string `json:"email"`
+		}
+
+		var rules = zvr.Rs().Add("Email", func(r *validation.Rule) {
+			r.ConvertField("email").Required("邮箱不能为空").Email("邮箱格式不正确")
+		})()
+		err := ctx.BindJSON(&req)
+		if err != nil {
+			ctx.JSON(200, gin.H{
+				"msg":     "参数格式错误",
+				"details": err.Error(),
+			})
+			return
+		}
+
+		verr := validation.ValidateStruct(req, &rules)
+		if verr != nil {
+			ctx.JSON(200, gin.H{
+				"msg":     "参数校验错误",
+				"details": verr.(*validation.ValidationError).Details(),
+			})
+			return
+		}
+
+		ctx.JSON(200, gin.H{
+			"msg":  "ok",
+			"data": req,
+		})
 	})
 
 	eng.Run(":8081")
