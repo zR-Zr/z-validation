@@ -63,7 +63,7 @@ func EqualFieldProvider(field string, msg ...string) VerifyProvider {
 	}
 }
 
-func EmailProvider(field string, msg ...string) VerifyProvider {
+func EmailProvider(msg ...string) VerifyProvider {
 	return func(fieldName string, fieldValue any, accessor *ValueAccessor) (bool, string) {
 		if !strings.Contains(fieldValue.(string), "@") {
 			if len(msg) > 0 {

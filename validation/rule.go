@@ -107,6 +107,10 @@ func (r *Rule) EqualField(field string, msg ...string) *Rule {
 	r.Providers = append(r.Providers, EqualFieldProvider(field, msg...))
 	return r
 }
+func (r *Rule) Email(msg ...string) *Rule {
+	r.Providers = append(r.Providers, EmailProvider(msg...))
+	return r
+}
 
 func RV(name string) *tempRule {
 	return &tempRule{
