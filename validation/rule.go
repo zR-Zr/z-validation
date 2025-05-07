@@ -112,6 +112,11 @@ func (r *Rule) Email(msg ...string) *Rule {
 	return r
 }
 
+func (r *Rule) Custom(providers ...VerifyProvider) *Rule {
+	r.Providers = append(r.Providers, providers...)
+	return r
+}
+
 func RV(name string) *tempRule {
 	return &tempRule{
 		Rule: Rule{
