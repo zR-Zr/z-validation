@@ -105,6 +105,44 @@ func main() {
 		})
 	})
 
+	eng.POST("/custom", func(ctx *gin.Context) {
+		var req struct {
+			Email string `json:"email"`
+		}
+		req.Email = "1223"
+		var rules = zvr.Rs().Add("Email", func(r *validation.Rule) {
+			r.ConvertField("email").Required("邮箱不能为空").Custom(func(fName string, fVal any, accessor *validation.ValueAccessor) (bool, string) {
+				if fVal.(string) != "1223" {
+					return false, "邮箱格式不正确"
+				}
+				return true, ""
+			})
+		})()
+		err := ctx.BindJSON(&req)
+		if err != nil {
+			ctx.JSON(200, gin.H{
+				"msg":     "参数格式错误",
+				"details": err.Error(),
+			})
+			return
+		}
+
+		verr := validation.ValidateStruct(req, &rules)
+		if verr != nil {
+			ctx.JSON(200, gin.H{
+				"msg":     "参数校验错误",
+				"details": verr.(*validation.ValidationError).Details(),
+			})
+			return
+		}
+
+		ctx.JSON(200, gin.H{
+			"msg":  "ok",
+			"data": req,
+		})
+
+	})
+
 	eng.Run(":8081")
 
 }
