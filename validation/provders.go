@@ -2,8 +2,12 @@ package validation
 
 import (
 	"fmt"
+	"net"
+	"net/url"
 	"reflect"
+	"regexp"
 	"strings"
+	"time"
 )
 
 func RequiredProvider(msg ...string) VerifyProvider {
@@ -73,6 +77,150 @@ func EmailProvider(msg ...string) VerifyProvider {
 			return false, fieldName + "必须是一个有效的邮箱地址"
 		}
 
+		return true, ""
+	}
+}
+
+func MinProvider(min float64, msg ...string) VerifyProvider {
+	return func(fName string, fVal any, accessor *ValueAccessor) (bool, string) {
+		var num float64
+		switch v := fVal.(type) {
+		case int:
+			num = float64(v)
+		case int32:
+			num = float64(v)
+		case int64:
+			num = float64(v)
+		case float32:
+			num = float64(v)
+		case float64:
+			num = v
+		default:
+			return false, fmt.Sprintf("%s 必须是数值类型", fName)
+		}
+		if num < min {
+			if len(msg) > 0 {
+				return false, msg[0]
+			}
+			return false, fmt.Sprintf("%s 不能小于 %v", fName, min)
+		}
+		return true, ""
+	}
+}
+
+func MaxProvider(max float64, msg ...string) VerifyProvider {
+	return func(fName string, fVal any, accessor *ValueAccessor) (bool, string) {
+		var num float64
+		switch v := fVal.(type) {
+		case int:
+			num = float64(v)
+		case int32:
+			num = float64(v)
+		case int64:
+			num = float64(v)
+		case float32:
+			num = float64(v)
+		case float64:
+			num = v
+		default:
+			return false, fmt.Sprintf("%s 必须是数值类型", fName)
+		}
+		if num > max {
+			if len(msg) > 0 {
+				return false, msg[0]
+			}
+			return false, fmt.Sprintf("%s 不能大于 %v", fName, max)
+		}
+		return true, ""
+	}
+}
+
+func RegexpProvider(pattern string, msg ...string) VerifyProvider {
+	reg := regexp.MustCompile(pattern)
+	return func(fName string, fVal any, accessor *ValueAccessor) (bool, string) {
+		str, ok := fVal.(string)
+		if !ok {
+			return false, fmt.Sprintf("%s 必须是字符串类型", fName)
+		}
+		if !reg.MatchString(str) {
+			if len(msg) > 0 {
+				return false, msg[0]
+			}
+			return false, fmt.Sprintf("%s 格式不符合要求", fName)
+		}
+		return true, ""
+	}
+}
+
+// 枚举校验：检查值是否在指定枚举列表中
+func EnumProvider(enums []string, msg ...string) VerifyProvider {
+	return func(fName string, fVal any, accessor *ValueAccessor) (bool, string) {
+		str, ok := fVal.(string)
+		if !ok {
+			return false, fmt.Sprintf("%s 必须是字符串类型", fName)
+		}
+		for _, e := range enums {
+			if str == e {
+				return true, ""
+			}
+		}
+		if len(msg) > 0 {
+			return false, msg[0]
+		}
+		return false, fmt.Sprintf("%s 必须是以下值之一: %v", fName, enums)
+	}
+}
+
+// 日期格式校验：检查字符串是否符合指定日期格式
+func DateFormatProvider(layout string, msg ...string) VerifyProvider {
+	return func(fName string, fVal any, accessor *ValueAccessor) (bool, string) {
+		str, ok := fVal.(string)
+		if !ok {
+			return false, fmt.Sprintf("%s 必须是字符串类型", fName)
+		}
+		_, err := time.Parse(layout, str)
+		if err != nil {
+			if len(msg) > 0 {
+				return false, msg[0]
+			}
+			return false, fmt.Sprintf("%s 格式不符合要求，正确格式应为: %s", fName, layout)
+		}
+		return true, ""
+	}
+}
+
+// IP地址校验：检查是否为有效的IPv4或IPv6地址
+func IPProvider(msg ...string) VerifyProvider {
+	return func(fName string, fVal any, accessor *ValueAccessor) (bool, string) {
+		str, ok := fVal.(string)
+		if !ok {
+			return false, fmt.Sprintf("%s 必须是字符串类型", fName)
+		}
+		ip := net.ParseIP(str)
+		if ip == nil {
+			if len(msg) > 0 {
+				return false, msg[0]
+			}
+			return false, fmt.Sprintf("%s 不是有效的IP地址", fName)
+		}
+		return true, ""
+	}
+}
+
+// URL校验：检查是否为有效的URL格式
+func URLProvider(msg ...string) VerifyProvider {
+	return func(fName string, fVal any, accessor *ValueAccessor) (bool, string) {
+		str, ok := fVal.(string)
+		if !ok {
+			return false, fmt.Sprintf("%s 必须是字符串类型", fName)
+		}
+		_, err := url.ParseRequestURI(str)
+		if err != nil {
+			if len(msg) > 0 {
+				return false, msg[0]
+			}
+			return false, fmt.Sprintf("%s 不是有效的URL地址", fName)
+		}
 		return true, ""
 	}
 }
